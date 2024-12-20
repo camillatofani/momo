@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Momo</title>
+	<link href="./assets/css/style.css" rel="stylesheet" data-cmp-info="10">
+</head>
+
+<body>
+	<div class="intro">
+		<div class="title">Momo</div>
+		<p>Per poter usare il servizio assicurati che tutte le pagine del tuo sito siano accessibili da un'applicazione client-side come questa.</p>
+	</div>
+<div>
+	<label>Inserisci il tuo sito nel formato come da placeholder. Ometti quindi: "www", "http" o "https".</label>
+	<input id="url" placeholder="miosito.it" />
+	<label>Di seguito puoi inserire dei link "invisibili" come le Thank you page. Utilizza lo stesso formato di scrittura soprastante e separa i link con una virgola. Come da placeholder.</label>
+	<textarea id="other" placeholder="miosito.it/link-1/, miosito.it/link-2/"></textarea>
+	<label>Inserisci i link da escludere (non navigare):</label>
+	<textarea id="exclude" placeholder="miosito.it/exlude-1/, miosito.it/exlude-2/"></textarea>
+	<button class="primary">Genera</button>
+	<pre id="res"></pre>
+</div>
+</body>
+
+<script>
+	let idCounter = 0;
+	let linksArray = [];
+
+	async function getLinksFromPage(url) {
+		try {
+			const response = await fetch(url);
+			const html = await response.text();
+			const parser = new DOMParser();
+			const doc = parser.parseFromString(html, "text/html");
+			const links = doc.querySelectorAll('a');
+			const hrefs = [];
+
+			function normalizeUrl(url) {
+				return url.endsWith('/') ? url.slice(0, -1) : url;
+			}
+
+			links.forEach(link => {
+				const href = normalizeUrl(link.href);
+
+				if (href !== normalizeUrl(window.location.href) && !href.endsWith('#')) {
+					hrefs.push(href);
+				}
+			});
+			return hrefs;
+		} catch (error) {
+			console.error('Errore nel recupero della pagina:', error);
+			return [];
+		}
+	}
+
+	function addLink(link) {
+		const existingLink = linksArray.find(linkData => linkData.link === link);
+		if (!existingLink) {
+			const newLink = {
+				id: idCounter++,
+				link: link,
+				linksId: []
+			};
+			linksArray.push(newLink);
+			return newLink.id;
+		}
+		return existingLink.id;
+	}
+
+	function updateLinksId(pageId, linksOnPage) {
+		const pageData = linksArray.find(linkData => linkData.id === pageId);
+		if (pageData) {
+			linksOnPage.forEach(link => {
+				const linkId = addLink(link);
+				if (!pageData.linksId.includes(linkId)) {
+					pageData.linksId.push(linkId);
+				}
+			});
+		}
+	}
+
+	async function exploreLinks(url, excludeLinks) {
+		// Se il link è nella lista di esclusione, fermiamo l'esplorazione
+		if (excludeLinks.includes(url)) {
+			return;
+		}
+
+		const pageId = addLink(url);
+		const linksOnPage = await getLinksFromPage(url);
+		updateLinksId(pageId, linksOnPage);
+		for (const link of linksOnPage) {
+			const linkId = addLink(link);
+			const linkData = linksArray.find(linkData => linkData.id === linkId);
+			if (linkData && linkData.linksId.length === 0) {
+				await exploreLinks(link, excludeLinks);
+			}
+		}
+	}
+
+	function printLinksArray() {
+		const res = document.querySelector('#res');
+		localStorage.setItem('albero', JSON.stringify(linksArray));
+		res.innerHTML = JSON.stringify(linksArray, null, 2);
+		res.style.display = 'block';
+	}
+
+	async function startExploration(initialUrl, excludeLinks) {
+		await exploreLinks(initialUrl, excludeLinks);
+	}
+
+	async function verifyManualLinks(manualLinks, excludeLinks) {
+		for (const link of manualLinks) {
+			await exploreLinks(link, excludeLinks);
+		}
+	}
+
+	function goLink(link, arrOther, excludeLinks) {
+		startExploration(link, excludeLinks).then(() => {
+			if (arrOther.length > 0) {
+				verifyManualLinks(arrOther, excludeLinks).then(() => {
+					printLinksArray();
+				});
+			} else {
+				printLinksArray();
+			}
+		});
+	}
+
+	const btn = document.querySelector('button');
+	const url = document.querySelector('#url');
+	const other = document.querySelector('#other');
+	const exclude = document.querySelector('#exclude');
+	btn.addEventListener('click', () => {
+		const arrOther = other.value.trim() ? other.value.split(',').map(item => `https://${ item.trim() }`) : [];
+		const excludeLinks = exclude.value.trim() ? exclude.value.split(',').map(item => `https://${ item.trim() }`) : [];
+		goLink(`https://${ url.value }`, arrOther || [], excludeLinks || []);
+	});
+</script>
+</html>

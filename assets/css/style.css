@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap');
+:root {
+	--dark: #121212;
+	--light: #242424;
+	--white: #ffffff;
+	--primary: #043857;
+	--secondary: #09FE88;
+}
+html {
+	scroll-behavior: smooth;
+}
+* {
+	margin: 0;
+	padding: 0;
+	font-family: 'Sora', system-ui;
+	font-size: 18px;
+	line-height: 24px;
+	font-display: swap;
+	box-sizing: border-box;
+}
+body {
+	padding: 20px;
+	font-size: 18px;
+	font-family: 'Sora', system-ui;
+	background-color: var(--primary);
+	color: white;
+}
+label {
+	padding-left: 5px;
+	opacity: 0.5;
+	font-weight: 300;
+}
+input,
+textarea {
+	font-family: 'Sora', system-ui;
+	border: none;
+	border-radius: 20px;
+	padding: 20px;
+	width: 100%;
+	margin-top: 10px;
+	margin-bottom: 20px;
+}
+button {
+	padding: 12px 30px;
+	border-radius: 50px;
+	text-decoration: none;
+	cursor: pointer;
+	font-weight: 300;
+	transition: opacity 0.1s ease;
+}
+button:hover {
+	opacity: 0.5;
+}
+.primary {
+	border: 1px solid var(--white);
+	color: var(--white);
+	background-color: rgba(0,0,0,0);
+}
+.intro {
+	text-align: center;
+	padding: 20px;
+	max-width: 600px;
+	margin: 50px auto;
+}
+.title {
+	margin-bottom: 20px;
+	font-size: 200%;
+	font-weight: 600;
+	color: var(--secondary);
+	text-align: center;
+}
+#res {
+	margin-top: 20px;
+	font-family: "Courier New", monospace;
+	background-color: var(--light);
+	color: var(--white);
+	padding: 10px;
+	font-size: 110%;
+	border-radius: 5px;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	max-width: 100%;
+	overflow-x: auto;
+	font-weight: 600;
+	display: none;
+}

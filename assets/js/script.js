@@ -1,8 +1,5 @@
-import fetch from 'node-fetch';
-import { JSDOM } from 'jsdom';
-
-export let idCounter = 0; // Contatore per generare ID univoci
-export let linksArray = []; // Array che conterrà gli oggetti con i link e gli ID
+let idCounter = 0; // Contatore per generare ID univoci
+let linksArray = []; // Array che conterrà gli oggetti con i link e gli ID
 
 // Funzione per estrarre i link da una pagina e restituire un array con gli oggetti
 async function getLinksFromPage(url) {
@@ -10,8 +7,8 @@ async function getLinksFromPage(url) {
 		const response = await fetch(url);
 		const html = await response.text();
 
-		const dom = new JSDOM(html);
-		const doc = dom.window.document;
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(html, "text/html");
 
 		const links = doc.querySelectorAll('a');
 		const hrefs = [];
@@ -33,6 +30,7 @@ async function getLinksFromPage(url) {
 
 // Funzione per aggiungere un link nell'array se non esiste già
 function addLink(link) {
+	// Verifica se il link è già nell'array
 	const existingLink = linksArray.find(linkData => linkData.link === link);
 	if (!existingLink) {
 		const newLink = {
@@ -61,15 +59,21 @@ function updateLinksId(pageId, linksOnPage) {
 
 // Funzione ricorsiva per esplorare i link e aggiornare i linksId
 async function exploreLinks(url) {
+	// Aggiungiamo il link iniziale
 	const pageId = addLink(url);
 
+	// Recuperiamo i link interni dalla pagina
 	const linksOnPage = await getLinksFromPage(url);
+
+	// Aggiorniamo il linksId della pagina con i link trovati
 	updateLinksId(pageId, linksOnPage);
 
+	// Esploriamo ogni link trovato
 	for (const link of linksOnPage) {
 		const linkId = addLink(link);
 		const linkData = linksArray.find(linkData => linkData.id === linkId);
 		if (linkData && linkData.linksId.length === 0) {
+			// Esploriamo il link solo se non è stato già esplorato
 			await exploreLinks(link);
 		}
 	}
@@ -77,30 +81,53 @@ async function exploreLinks(url) {
 
 // Funzione per stampare il risultato in formato JSON
 function printLinksArray() {
-	return JSON.stringify(linksArray, null, 2);
+	const res = document.querySelector('#res');
+	res.innerHTML = JSON.stringify(linksArray, null, 2);
+	res.style.display = 'block';
+	// res.innerHTML = JSON.stringify(linksArray);
 }
 
 // Funzione principale per avviare l'esplorazione
 async function startExploration(initialUrl) {
 	await exploreLinks(initialUrl);
-	return printLinksArray();
+	// printLinksArray();
 }
 
-// API Route per Vercel
-export default async function handler(req, res) {
-	const { url } = req.query;
-
-	if (!url) {
-		return res.status(400).json({ error: 'URL mancante' });
-	}
-
-	try {
-		console.log(`Starting exploration for URL: ${ url }`); // Log the URL being processed
-		const result = await startExploration(url);
-		console.log('Exploration completed'); // Log when the exploration is complete
-		res.status(200).json({ links: result });
-	} catch (error) {
-		console.error('Error during exploration:', error); // Log any error that occurs
-		res.status(500).json({ error: 'Errore durante l\'esplorazione dei link' });
+// Funzione per verificare link manuali
+async function verifyManualLinks(manualLinks) {
+	for (const link of manualLinks) {
+		await exploreLinks(link);
 	}
 }
+
+// // Array di link manuali da verificare
+// const manualLinks = [
+// 	'https://psicologoinchat.it/abbonamento/',
+// 	'https://psicologoinchat.it/thank-you-page-trial/',
+// ];
+
+function goLink(link, arrOther) {
+	// Eseguiamo l'esplorazione iniziale e poi verifichiamo i link manuali
+	startExploration(link).then(() => {
+		if (arrOther.length > 0) {
+			// Verifica dei link manuali
+			verifyManualLinks(arrOther).then(() => {
+				printLinksArray(); // Stampa l'array finale con tutti i link esplorati
+			});
+		} else {
+			// Se non ci sono link manuali
+			printLinksArray(); // Stampa l'array finale
+		}
+	});
+};
+
+const btn = document.querySelector('button');
+const url = document.querySelector('input');
+const other = document.querySelector('textarea');
+btn.addEventListener('click', () => {
+	const arrOther = other.value.split(',').map(item => `https://${ item.trim() }`);
+	goLink(`https://${ url.value }`, arrOther || []);
+});
+
+console.log('primo: psicologoinchat.it');
+console.log('secondo: psicologoinchat.it/abbonamento/,psicologoinchat.it/thank-you-page-trial/');

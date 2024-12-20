@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="./assets/css/style.css" rel="stylesheet" data-cmp-info="10">
+	<title>Link Relationship Table</title>
+<style>
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		overflow-x: auto;
+		display: block;
+	}
+	th,
+	td {
+		padding: 10px;
+		border: 1px solid #ddd;
+		text-align: center;
+	}
+	@media (max-width: 600px) {
+		table {
+			font-size: 12px;
+		}
+		th,
+		td {
+			padding: 8px;
+		}
+	}
+</style>
+</head>
+
+<body>
+
+	<div class="intro">
+		<div class="title">Momo</div>
+		<p>Le tue informazioni</p>
+	</div>
+	<table>
+		<thead>
+			<tr>
+				<th>Link 1</th>
+				<th>Link 2</th>
+				<th>Relationship</th>
+			</tr>
+		</thead>
+		<tbody id="table-body">
+			<!-- Data rows will be populated here -->
+		</tbody>
+	</table>
+
+	<script>
+		const data = JSON.parse(localStorage.getItem('albero'));
+
+		const tableBody = document.getElementById("table-body");
+
+		// Raggruppiamo per link "Link 1"
+		const groupedData = data.reduce((acc, item) => {
+			if (!acc[item.link]) {
+				acc[item.link] = [];
+			}
+			acc[item.link].push(item);
+			return acc;
+		}, {});
+
+		// Iteriamo sui gruppi di dati
+		Object.keys(groupedData).forEach((link1) => {
+			const linkGroup = groupedData[link1];
+			const rowspan = linkGroup.length; // Quante righe ci sono per questo link1
+
+			linkGroup.forEach((item1, index) => {
+				// Crea una nuova riga per ogni link2
+				data.forEach((item2) => {
+					const row = document.createElement("tr");
+
+					// Se è la prima riga per questo link1, unisci la cella di Link 1
+					if (index === 0) {
+						const td1 = document.createElement("td");
+						td1.textContent = link1;
+						td1.rowSpan = rowspan;  // Unisce le righe
+						row.appendChild(td1);
+					}
+
+					// Crea la colonna per il secondo link
+					const td2 = document.createElement("td");
+					td2.textContent = item2.link;
+					row.appendChild(td2);
+
+					// Crea la colonna per la relazione
+					const td3 = document.createElement("td");
+					if (item1.linksId.includes(item2.id)) {
+						td3.textContent = "X"; // Relazione trovata
+					} else {
+						td3.textContent = ""; // Nessuna relazione
+					}
+					row.appendChild(td3);
+
+					tableBody.appendChild(row);
+				});
+			});
+		});
+	</script>
+
+</body>
+
+</html>
