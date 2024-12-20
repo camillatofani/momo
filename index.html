@@ -21,6 +21,7 @@
 	<label>Inserisci i link da escludere (non navigare):</label>
 	<textarea id="exclude" placeholder="miosito.it/exlude-1/, miosito.it/exlude-2/"></textarea>
 	<button class="primary">Genera</button>
+	<a href="table.html"><button id="btnTable" class="primary" style="display: none;">Vai alla tabella</button></a>
 	<pre id="res"></pre>
 </div>
 </body>
@@ -105,6 +106,7 @@
 		localStorage.setItem('albero', JSON.stringify(linksArray));
 		res.innerHTML = JSON.stringify(linksArray, null, 2);
 		res.style.display = 'block';
+		btnTable.style.display = 'block';
 	}
 
 	async function startExploration(initialUrl, excludeLinks) {
