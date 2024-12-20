@@ -88,16 +88,19 @@ async function startExploration(initialUrl) {
 
 // API Route per Vercel
 export default async function handler(req, res) {
-	const { url } = req.query; // Ricevi l'URL come parametro nella query
+	const { url } = req.query;
 
 	if (!url) {
 		return res.status(400).json({ error: 'URL mancante' });
 	}
 
 	try {
+		console.log(`Starting exploration for URL: ${ url }`); // Log the URL being processed
 		const result = await startExploration(url);
+		console.log('Exploration completed'); // Log when the exploration is complete
 		res.status(200).json({ links: result });
 	} catch (error) {
+		console.error('Error during exploration:', error); // Log any error that occurs
 		res.status(500).json({ error: 'Errore durante l\'esplorazione dei link' });
 	}
 }
