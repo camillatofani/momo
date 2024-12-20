@@ -1,0 +1,15 @@
+{
+	"version": 2,
+	"builds": [
+		{
+			"src": "api/explore.js",
+			"use": "@vercel/node"
+		}
+	],
+	"routes": [
+		{
+			"src": "/api/explore",
+			"dest": "/api/explore.js"
+		}
+	]
+}
